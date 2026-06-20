@@ -1,0 +1,69 @@
+{% extends "base_admin.html" %}
+{% set active = "reports" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">🔍</div>
+  <div>
+    <div class="page-header-title">نتائج البحث</div>
+    <div class="page-header-sub">{{ section }} — "{{ query }}"</div>
+  </div>
+</div>
+
+<form method="GET" action="/admin/search" class="card" style="margin-bottom:20px">
+  <div class="grid-2">
+    <div class="form-group">
+      <label class="form-label">ابحث في</label>
+      <select name="section" class="form-control">
+        {% for sec in ['المنتجات','المبيعات','الطلبات','السجل المالي'] %}
+        <option value="{{ sec }}" {% if section==sec %}selected{% endif %}>{{ sec }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">كلمة البحث</label>
+      <input type="text" name="query" class="form-control" value="{{ query }}" required>
+    </div>
+  </div>
+  <button type="submit" class="btn btn-primary">🔍 بحث</button>
+</form>
+
+<div style="font-weight:700;color:#2d1f2a;margin-bottom:14px">النتائج ({{ results|length }})</div>
+
+{% if results %}
+  {% if section == "المنتجات" %}
+    {% for r in results %}
+    <div class="sale-item">
+      <div class="sale-item-left"><span class="name">{{ r.name }}</span></div>
+      <div class="sale-item-right"><span class="sale-profit">{{ r.selling_price }} د.ل</span><span class="sale-seller">مخزون: {{ r.quantity }}</span></div>
+    </div>
+    {% endfor %}
+
+  {% elif section == "المبيعات" %}
+    {% for r in results %}
+    <div class="sale-item">
+      <div class="sale-item-left"><span class="name">{{ r.product_name }}</span><span class="qty"> × {{ r.quantity }}</span></div>
+      <div class="sale-item-right"><span class="sale-profit">{{ r.profit }} د.ل</span><span class="sale-seller">👤 {{ r.seller }}</span></div>
+    </div>
+    {% endfor %}
+
+  {% elif section == "الطلبات" %}
+    {% for r in results %}
+    <div class="sale-item">
+      <div class="sale-item-left"><span class="name">{{ r.customer_name }}</span><span class="qty"> — {{ r.product_name }}</span></div>
+      <div class="sale-item-right"><span class="badge badge-new">{{ r.status }}</span><span class="sale-seller">📞 {{ r.phone }}</span></div>
+    </div>
+    {% endfor %}
+
+  {% elif section == "السجل المالي" %}
+    {% for r in results %}
+    <div class="sale-item">
+      <div class="sale-item-left"><span class="name">{{ r.action_type }}</span><span class="qty"> — {{ r.note }}</span></div>
+      <div class="sale-item-right"><span class="sale-profit">{{ r.amount }} د.ل</span><span class="sale-seller">👤 {{ r.user_name }}</span></div>
+    </div>
+    {% endfor %}
+  {% endif %}
+{% else %}
+<div class="alert alert-info">لا توجد نتائج مطابقة لـ "{{ query }}"</div>
+{% endif %}
+
+{% endblock %}

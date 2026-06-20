@@ -1,0 +1,128 @@
+{% extends "base_admin.html" %}
+{% set active = "orders" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">📋</div>
+  <div>
+    <div class="page-header-title">إدارة الطلبات</div>
+    <div class="page-header-sub">متابعة وتحديث حالة طلبات الزبائن</div>
+  </div>
+</div>
+
+<div class="tabs tabs-group">
+  <button class="tab-btn active" data-tab="tab-view">📋 عرض الطلبات</button>
+  <button class="tab-btn" data-tab="tab-add">➕ إضافة طلب</button>
+</div>
+
+<!-- عرض الطلبات -->
+<div id="tab-view" class="tab-content active">
+
+  <!-- إحصاء سريع -->
+  <div class="grid-4">
+    <div class="stat-card"><div class="stat-icon">🆕</div><div class="stat-value">{{ orders|selectattr('status','equalto','جديد')|list|length }}</div><div class="stat-label">جديد</div></div>
+    <div class="stat-card"><div class="stat-icon">⚙️</div><div class="stat-value">{{ orders|selectattr('status','equalto','قيد التجهيز')|list|length }}</div><div class="stat-label">قيد التجهيز</div></div>
+    <div class="stat-card"><div class="stat-icon">✅</div><div class="stat-value">{{ orders|selectattr('status','equalto','تم التسليم')|list|length }}</div><div class="stat-label">مكتمل</div></div>
+    <div class="stat-card"><div class="stat-icon">❌</div><div class="stat-value">{{ orders|selectattr('status','equalto','ملغي')|list|length }}</div><div class="stat-label">ملغي</div></div>
+  </div>
+
+  <!-- فلترة -->
+  <form method="GET" action="/admin/orders" class="card" style="margin-bottom:20px">
+    <div class="grid-4">
+      <div class="form-group"><label class="form-label">بالاسم</label><input type="text" name="name" class="form-control" value="{{ filter_name }}"></div>
+      <div class="form-group"><label class="form-label">بالهاتف</label><input type="text" name="phone" class="form-control" value="{{ filter_phone }}"></div>
+      <div class="form-group"><label class="form-label">بالمدينة</label><input type="text" name="city" class="form-control" value="{{ filter_city }}"></div>
+      <div class="form-group">
+        <label class="form-label">بالحالة</label>
+        <select name="status" class="form-control">
+          {% for st in ['الكل','جديد','قيد التجهيز','تم الشحن','تم التسليم','ملغي'] %}
+          <option value="{{ st }}" {% if filter_status==st %}selected{% endif %}>{{ st }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-ghost btn-sm">🔍 بحث</button>
+  </form>
+
+  {% if orders %}
+  {% set badge_map = {'جديد':'badge-new','قيد التجهيز':'badge-processing','تم الشحن':'badge-shipped','تم التسليم':'badge-done','ملغي':'badge-cancelled'} %}
+  {% for order in orders %}
+  <div class="accordion-item">
+    <div class="accordion-header">
+      <span>
+        <span class="badge {{ badge_map.get(order.status,'badge-new') }}">{{ order.status or 'جديد' }}</span>
+        {{ order.customer_name }} — {{ order.product_name }}
+      </span>
+      <span>▾</span>
+    </div>
+    <div class="accordion-body">
+      <div class="grid-2" style="margin-top:14px">
+        <div>
+          <p>👤 <strong>الاسم:</strong> {{ order.customer_name }}</p>
+          <p>📞 <strong>الهاتف:</strong> {{ order.phone }}</p>
+          <p>🏙️ <strong>المدينة:</strong> {{ order.city }}</p>
+          <p>📍 <strong>العنوان:</strong> {{ order.address }}</p>
+        </div>
+        <div>
+          <p>🛒 <strong>المنتج:</strong> {{ order.product_name }}</p>
+          <p>📦 <strong>الكمية:</strong> {{ order.quantity }}</p>
+          <p>💰 <strong>الإجمالي:</strong> {{ order.total_price or 0 }} د.ل</p>
+          <p>📝 <strong>ملاحظات:</strong> {{ order.notes or '-' }}</p>
+        </div>
+      </div>
+
+      <form method="POST" action="/admin/orders/update/{{ order.id }}" style="margin-top:16px;display:flex;gap:10px;align-items:end;flex-wrap:wrap">
+        <div class="form-group" style="flex:1;min-width:160px;margin-bottom:0">
+          <label class="form-label">تغيير الحالة</label>
+          <select name="status" class="form-control">
+            {% for st in ['جديد','قيد التجهيز','تم الشحن','تم التسليم','ملغي'] %}
+            <option value="{{ st }}" {% if order.status==st %}selected{% endif %}>{{ st }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">💾 حفظ الحالة</button>
+      </form>
+
+      <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+        <a href="https://wa.me/{{ order.phone }}?text={{ ('مرحباً ' + (order.customer_name or '') + '،%0Aطلبك: ' + (order.product_name or '') + ' x' + order.quantity|string + '%0Aالحالة: ' + (order.status or 'جديد') + '%0Aشكراً لتعاملكم معنا 🛍️') }}" target="_blank" class="btn btn-wa btn-sm">📱 واتساب الزبون</a>
+        <form method="POST" action="/admin/orders/delete/{{ order.id }}" onsubmit="return confirm('⚠️ هل أنت متأكد من حذف هذا الطلب؟')">
+          <button type="submit" class="btn btn-danger btn-sm">🗑️ حذف</button>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="alert alert-info">لا توجد طلبات</div>
+  {% endif %}
+</div>
+
+<!-- إضافة طلب يدوي -->
+<div id="tab-add" class="tab-content">
+  <div class="card">
+    <form method="POST" action="/admin/orders/add">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">اسم الزبون</label><input type="text" name="name" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">رقم الهاتف</label><input type="text" name="phone" class="form-control" required></div>
+      </div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">المدينة</label><input type="text" name="city" class="form-control"></div>
+        <div class="form-group">
+          <label class="form-label">المنتج</label>
+          <select name="product" class="form-control">
+            {% for p in products if p.quantity > 0 %}
+            <option value="{{ p.name }}">{{ p.name }} — {{ p.selling_price }} د.ل</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label class="form-label">العنوان / أقرب نقطة دالة</label><textarea name="address" class="form-control"></textarea></div>
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">الكمية</label><input type="number" name="qty" class="form-control" value="1" min="1"></div>
+      </div>
+      <div class="form-group"><label class="form-label">ملاحظات</label><textarea name="notes" class="form-control"></textarea></div>
+      <button type="submit" class="btn btn-primary btn-full">✅ تأكيد الطلب</button>
+    </form>
+  </div>
+</div>
+
+{% endblock %}

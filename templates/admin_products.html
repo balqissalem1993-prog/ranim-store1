@@ -1,0 +1,175 @@
+{% extends "base_admin.html" %}
+{% set active = "products" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">📦</div>
+  <div>
+    <div class="page-header-title">المنتجات</div>
+    <div class="page-header-sub">إضافة وإدارة منتجات المتجر</div>
+  </div>
+</div>
+
+<!-- إضافة منتج جديد -->
+<div class="card" id="add" style="margin-bottom:24px">
+  <div style="font-weight:700;color:#2d1f2a;margin-bottom:18px;font-size:1.05rem">➕ إضافة منتج جديد</div>
+  <form method="POST" action="/admin/products/add" enctype="multipart/form-data" id="add-form">
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">اسم المنتج</label>
+        <input type="text" name="name" class="form-control" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الكمية</label>
+        <input type="number" name="qty" id="f-qty" class="form-control" value="1" min="1" required>
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="form-group">
+        <label class="form-label">السعر باليوان</label>
+        <input type="number" step="0.01" name="price_yuan" id="f-yuan" class="form-control" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الوزن (كغ)</label>
+        <input type="number" step="0.01" name="weight" id="f-weight" class="form-control" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">الحد الأقصى للطلب</label>
+        <input type="number" name="max_order_qty" class="form-control" value="1" min="1">
+      </div>
+    </div>
+
+    <div class="grid-3">
+      <div class="form-group">
+        <label class="form-label">تكلفة التغليف</label>
+        <input type="number" step="0.01" name="pack_cost" id="f-pack" class="form-control" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">تكلفة الكيس</label>
+        <input type="number" step="0.01" name="bag_cost" id="f-bag" class="form-control" value="0">
+      </div>
+      <div class="form-group">
+        <label class="form-label">مصدر الشراء</label>
+        <select name="purchase_source" class="form-control">
+          <option value="cash">نقدي (Cash)</option>
+          <option value="bank">بنكي (Bank)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="form-group">
+        <label class="form-label">سعر الدولار</label>
+        <input type="number" step="0.01" name="dollar_rate" id="f-dollar" class="form-control" value="7.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">سعر الشحن (لكل كغ)</label>
+        <input type="number" step="0.01" name="shipping_rate" id="f-shipping" class="form-control" value="12.5">
+      </div>
+    </div>
+
+    <div class="alert alert-info" id="capital-preview">
+      💰 رأس المال للقطعة: <strong id="cap-unit">0</strong> د.ل — الإجمالي: <strong id="cap-total">0</strong> د.ل
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">سعر البيع</label>
+      <input type="number" step="0.01" name="selling_price" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">صورة المنتج</label>
+      <input type="file" name="image" accept="image/*" class="form-control">
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-full">💾 حفظ المنتج</button>
+  </form>
+</div>
+
+<!-- قائمة المنتجات -->
+<div style="font-weight:700;color:#2d1f2a;margin-bottom:14px;font-size:1.05rem">قائمة المنتجات ({{ products|length }})</div>
+
+{% if products %}
+{% for product in products %}
+<div class="accordion-item">
+  <div class="accordion-header">
+    <span>{{ product.name }} — المخزون: {{ product.quantity }}{% if product.quantity < 5 %} ⚠️{% endif %}</span>
+    <span>▾</span>
+  </div>
+  <div class="accordion-body">
+    <div class="grid-2" style="margin-top:16px">
+      <div>
+        {% if product.image_url %}
+        <img src="{{ product.image_url }}" style="width:100%;max-width:200px;border-radius:12px" alt="{{ product.name }}">
+        {% endif %}
+      </div>
+      <div>
+        {% if product.qr %}
+        <div style="font-weight:600;margin-bottom:8px">QR Code المنتج:</div>
+        <img src="{{ product.qr }}" width="140">
+        <div style="color:#9e8880;font-size:0.8rem;margin-top:4px">يفتح المتجر مباشرة على هذا المنتج</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <form method="POST" action="/admin/products/update/{{ product.id }}" enctype="multipart/form-data" style="margin-top:16px">
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">الكمية</label>
+          <input type="number" name="quantity" class="form-control" value="{{ product.quantity }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">سعر البيع</label>
+          <input type="number" step="0.01" name="selling_price" class="form-control" value="{{ product.selling_price }}">
+        </div>
+        <div class="form-group">
+          <label class="form-label">الحد الأقصى</label>
+          <input type="number" name="max_order_qty" class="form-control" value="{{ product.max_order_qty or product.quantity }}">
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">استبدال الصورة</label>
+        <input type="file" name="image" accept="image/*" class="form-control">
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <button type="submit" class="btn btn-primary btn-sm">💾 حفظ التعديل</button>
+      </div>
+    </form>
+
+    <div style="display:flex;gap:10px;margin-top:10px;flex-wrap:wrap">
+      <form method="POST" action="/admin/products/visibility/{{ product.id }}">
+        <button type="submit" class="btn btn-ghost btn-sm">{{ '🔴 إخفاء عن المتجر' if product.visible != False else '🟢 إظهار في المتجر' }}</button>
+      </form>
+      <form method="POST" action="/admin/products/delete/{{ product.id }}" onsubmit="return confirm('⚠️ هل أنت متأكد من حذف هذا المنتج؟')">
+        <button type="submit" class="btn btn-danger btn-sm">🗑️ حذف المنتج</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">لا توجد منتجات بعد</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function calcCapital(){
+  const yuan = parseFloat(document.getElementById('f-yuan').value)||0;
+  const weight = parseFloat(document.getElementById('f-weight').value)||0;
+  const pack = parseFloat(document.getElementById('f-pack').value)||0;
+  const bag = parseFloat(document.getElementById('f-bag').value)||0;
+  const dollar = parseFloat(document.getElementById('f-dollar').value)||0;
+  const shipping = parseFloat(document.getElementById('f-shipping').value)||0;
+  const qty = parseFloat(document.getElementById('f-qty').value)||1;
+  const unitCap = Math.round(((yuan*0.14)*dollar + (weight*shipping)*dollar + pack + bag)*100)/100;
+  document.getElementById('cap-unit').textContent = unitCap;
+  document.getElementById('cap-total').textContent = Math.round(unitCap*qty*100)/100;
+}
+['f-yuan','f-weight','f-pack','f-bag','f-dollar','f-shipping','f-qty'].forEach(id=>{
+  document.getElementById(id).addEventListener('input', calcCapital);
+});
+calcCapital();
+</script>
+{% endblock %}

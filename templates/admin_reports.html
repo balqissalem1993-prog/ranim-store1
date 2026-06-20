@@ -1,0 +1,174 @@
+{% extends "base_admin.html" %}
+{% set active = "reports" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">📈</div>
+  <div>
+    <div class="page-header-title">التقارير والإحصائيات</div>
+    <div class="page-header-sub">أداء المتجر، الأهداف، التقييمات، التصدير</div>
+  </div>
+</div>
+
+<div class="tabs tabs-group">
+  <button class="tab-btn active" data-tab="tab-stats">📊 إحصائيات</button>
+  <button class="tab-btn" data-tab="goals">🎯 الأهداف</button>
+  <button class="tab-btn" data-tab="notifications">🔔 الإشعارات</button>
+  <button class="tab-btn" data-tab="reviews">⭐ التقييمات</button>
+  <button class="tab-btn" data-tab="tab-search">🔍 البحث</button>
+  <button class="tab-btn" data-tab="tab-export">📤 تصدير ونسخ احتياطي</button>
+</div>
+
+<!-- إحصائيات -->
+<div id="tab-stats" class="tab-content active">
+  {% if transactions %}
+  {% set total_profit = transactions|sum(attribute='profit') %}
+  {% set total_revenue = transactions|sum(attribute='total') %}
+  <div class="grid-3">
+    <div class="stat-card accent"><div class="stat-value">{{ total_profit|round(2) }}</div><div class="stat-label">إجمالي الأرباح (د.ل)</div></div>
+    <div class="stat-card"><div class="stat-value">{{ total_revenue|round(2) }}</div><div class="stat-label">إجمالي المبيعات (د.ل)</div></div>
+    <div class="stat-card"><div class="stat-value">{{ transactions|length }}</div><div class="stat-label">عدد العمليات</div></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-weight:700;margin-bottom:12px">🏆 أفضل المنتجات مبيعاً (حسب الكمية)</div>
+    {% set product_qty = {} %}
+    {% for t in transactions %}
+      {% if product_qty.update({t.product_name: product_qty.get(t.product_name,0) + t.quantity}) %}{% endif %}
+    {% endfor %}
+    {% for name, qty in product_qty.items()|sort(attribute='1', reverse=true) %}
+    <div class="sale-item"><div class="sale-item-left"><span class="name">{{ name }}</span></div><div class="sale-profit">{{ qty }} قطعة</div></div>
+    {% endfor %}
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-weight:700;margin-bottom:12px">👤 أداء البائعين (حسب الأرباح)</div>
+    {% set seller_profit = {} %}
+    {% for t in transactions %}
+      {% if seller_profit.update({t.seller: seller_profit.get(t.seller,0) + t.profit}) %}{% endif %}
+    {% endfor %}
+    {% for name, profit in seller_profit.items()|sort(attribute='1', reverse=true) %}
+    <div class="sale-item"><div class="sale-item-left"><span class="name">{{ name }}</span></div><div class="sale-profit">{{ profit|round(2) }} د.ل</div></div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="alert alert-info">لا توجد بيانات مبيعات بعد</div>
+  {% endif %}
+
+  {% if products %}
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:12px">📦 المخزون الحالي</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th></tr></thead>
+        <tbody>
+        {% for p in products %}
+        <tr><td>{{ p.name }}</td><td>{{ p.quantity }}</td><td>{{ p.selling_price }} د.ل</td></tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- الأهداف -->
+<div id="goals" class="tab-content">
+  <div class="card">
+    <form method="GET" action="/admin/reports" style="display:flex;gap:10px;align-items:end;margin-bottom:20px">
+      <div class="form-group" style="flex:1;margin-bottom:0">
+        <label class="form-label">🎯 هدف الأرباح الشهري (د.ل)</label>
+        <input type="number" name="goal" class="form-control" value="{{ goal }}">
+      </div>
+      <button type="submit" class="btn btn-primary">💾 تحديث الهدف</button>
+    </form>
+    <div class="grid-2">
+      <div class="stat-card"><div class="stat-value">{{ month_profit }}</div><div class="stat-label">أرباح هذا الشهر (د.ل)</div></div>
+      <div class="stat-card"><div class="stat-value">{{ goal }}</div><div class="stat-label">الهدف (د.ل)</div></div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-bar" style="width:{{ pct }}%;background:{{ '#10b981' if pct>=100 else '#6366f1' if pct>=50 else '#f59e0b' }}">{{ pct }}%</div>
+    </div>
+    {% if pct >= 100 %}
+    <div class="alert alert-success">🎉 تهانينا! حققت الهدف الشهري!</div>
+    {% elif pct >= 75 %}
+    <div class="alert alert-info">💪 أنت على وشك تحقيق الهدف!</div>
+    {% else %}
+    <div class="alert alert-warning">تحتاج {{ (goal - month_profit)|round(2) }} د.ل إضافية لتحقيق الهدف</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- الإشعارات -->
+<div id="notifications" class="tab-content">
+  {% if notifs %}
+  {% for n in notifs %}
+  <div class="alert" style="border-right:4px solid {{ n.color }};background:white;box-shadow:0 2px 10px rgba(26,17,24,0.06)">
+    <span style="font-size:1.2rem">{{ n.icon }}</span> {{ n.msg }}
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="alert alert-success">✅ لا توجد إشعارات جديدة</div>
+  {% endif %}
+</div>
+
+<!-- التقييمات -->
+<div id="reviews" class="tab-content">
+  {% if reviews %}
+  <div class="grid-2">
+    <div class="stat-card"><div class="stat-value">{{ avg_rating }} / 5</div><div class="stat-label">⭐ متوسط التقييم</div></div>
+    <div class="stat-card"><div class="stat-value">{{ reviews|length }}</div><div class="stat-label">📝 عدد التقييمات</div></div>
+  </div>
+  {% for r in reviews %}
+  <div class="card-sm" style="margin-bottom:10px">
+    <div style="font-size:1.1rem">{{ '⭐' * (r.rating or 0) }}</div>
+    <div style="color:#6b5560;margin-top:6px">{{ r.review or '—' }}</div>
+    <div style="color:#9e8880;font-size:0.8rem;margin-top:4px">🕒 {{ r.created_at[:16] if r.created_at else '' }}</div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="alert alert-info">لا توجد تقييمات بعد</div>
+  {% endif %}
+</div>
+
+<!-- البحث -->
+<div id="tab-search" class="tab-content">
+  <div class="card">
+    <form method="GET" action="/admin/search">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">ابحث في</label>
+          <select name="section" class="form-control">
+            <option value="المنتجات">المنتجات</option>
+            <option value="المبيعات">المبيعات</option>
+            <option value="الطلبات">الطلبات</option>
+            <option value="السجل المالي">السجل المالي</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">كلمة البحث</label>
+          <input type="text" name="query" class="form-control" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">🔍 بحث</button>
+    </form>
+  </div>
+</div>
+
+<!-- تصدير ونسخ احتياطي -->
+<div id="tab-export" class="tab-content">
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-weight:700;margin-bottom:14px">📤 تصدير بيانات</div>
+    <div class="grid-4">
+      <a href="/admin/export/المنتجات" class="btn btn-ghost btn-full">📦 المنتجات</a>
+      <a href="/admin/export/المبيعات" class="btn btn-ghost btn-full">🛒 المبيعات</a>
+      <a href="/admin/export/الطلبات" class="btn btn-ghost btn-full">📋 الطلبات</a>
+      <a href="/admin/export/السجل المالي" class="btn btn-ghost btn-full">🧾 السجل المالي</a>
+    </div>
+  </div>
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:14px">💾 نسخة احتياطية كاملة</div>
+    <a href="/admin/backup" class="btn btn-primary btn-full">⬇️ تحميل نسخة احتياطية كاملة (Excel)</a>
+  </div>
+</div>
+
+{% endblock %}

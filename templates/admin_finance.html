@@ -1,0 +1,152 @@
+{% extends "base_admin.html" %}
+{% set active = "finance" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">💰</div>
+  <div>
+    <div class="page-header-title">المحافظ والخزائن</div>
+    <div class="page-header-sub">إدارة المحافظ ورأس المال وسجل العمليات</div>
+  </div>
+</div>
+
+<!-- محافظ الشركاء -->
+<div style="font-weight:700;color:#2d1f2a;margin-bottom:14px;font-size:1.05rem">👤 محافظ الشركاء</div>
+{% if wallets %}
+<div class="grid-4" style="margin-bottom:24px">
+  {% for w in wallets %}
+  <div class="stat-card">
+    <div class="stat-icon">👤</div>
+    <div class="stat-value">{{ w.balance }}</div>
+    <div class="stat-label">{{ w.partner_name }} (د.ل)</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">لا توجد محافظ بعد</div>
+{% endif %}
+
+<!-- خزائن رأس المال -->
+<div style="font-weight:700;color:#2d1f2a;margin-bottom:14px;font-size:1.05rem">🏦 خزائن رأس المال</div>
+{% if capitals %}
+<div class="grid-2" style="margin-bottom:24px">
+  {% for c in capitals %}
+  <div class="stat-card">
+    <div class="stat-icon">🏦</div>
+    <div class="stat-value">{{ c.balance }}</div>
+    <div class="stat-label">{{ c.account_type }} (د.ل)</div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-info">لا توجد خزائن بعد — تُنشأ تلقائياً عند أول عملية</div>
+{% endif %}
+
+<div class="tabs tabs-group">
+  <button class="tab-btn active" data-tab="tab-wallet">💼 عمليات المحفظة</button>
+  <button class="tab-btn" data-tab="tab-capital">🏦 عمليات رأس المال</button>
+  <button class="tab-btn" data-tab="tab-logs">📋 سجل العمليات</button>
+</div>
+
+<!-- عمليات المحفظة -->
+<div id="tab-wallet" class="tab-content active">
+  <div class="card">
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="tab-withdraw">💸 سحب</button>
+      <button class="tab-btn" data-tab="tab-deposit">➕ إضافة</button>
+    </div>
+    <div id="tab-withdraw" class="tab-content active">
+      <form method="POST" action="/admin/finance/wallet">
+        <input type="hidden" name="action" value="withdraw">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">المستخدم</label>
+            <select name="user" class="form-control">
+              {% for u in users.keys() %}<option value="{{ u }}">{{ u }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">مبلغ السحب</label>
+            <input type="number" step="0.01" name="amount" class="form-control" required>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary">💸 سحب</button>
+      </form>
+    </div>
+    <div id="tab-deposit" class="tab-content">
+      <form method="POST" action="/admin/finance/wallet">
+        <input type="hidden" name="action" value="add">
+        <div class="grid-2">
+          <div class="form-group">
+            <label class="form-label">المستخدم</label>
+            <select name="user" class="form-control">
+              {% for u in users.keys() %}<option value="{{ u }}">{{ u }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">مبلغ الإضافة</label>
+            <input type="number" step="0.01" name="amount" class="form-control" required>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">ملاحظة</label><input type="text" name="note" class="form-control"></div>
+        <button type="submit" class="btn btn-primary">➕ إضافة</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- عمليات رأس المال -->
+<div id="tab-capital" class="tab-content">
+  <div class="card">
+    <form method="POST" action="/admin/finance/capital">
+      <div class="grid-3">
+        <div class="form-group">
+          <label class="form-label">العملية</label>
+          <select name="action" class="form-control">
+            <option value="add">إضافة</option>
+            <option value="withdraw">سحب</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">الخزنة</label>
+          <select name="account_type" class="form-control">
+            <option value="cash">نقدي (Cash)</option>
+            <option value="bank">بنكي (Bank)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">المبلغ</label>
+          <input type="number" step="0.01" name="amount" class="form-control" required>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">✅ تنفيذ</button>
+    </form>
+  </div>
+</div>
+
+<!-- سجل العمليات -->
+<div id="tab-logs" class="tab-content">
+  {% if logs %}
+  <div class="grid-3" style="margin-bottom:16px">
+    <div class="stat-card"><div class="stat-value">{{ logs|length }}</div><div class="stat-label">إجمالي العمليات</div></div>
+    <div class="stat-card"><div class="stat-value">{{ logs|selectattr('action_type','in',['إضافة','بيع','إتمام طلب','إضافة للمحفظة'])|sum(attribute='amount')|round(2) }}</div><div class="stat-label">📥 الداخل (د.ل)</div></div>
+    <div class="stat-card"><div class="stat-value">{{ logs|selectattr('action_type','in',['سحب','سحب من المحفظة','إضافة بضاعة'])|sum(attribute='amount')|round(2) }}</div><div class="stat-label">📤 الخارج (د.ل)</div></div>
+  </div>
+  {% for l in logs %}
+  <div class="sale-item">
+    <div class="sale-item-left">
+      <span class="name">{{ l.action_type }}</span>
+      <span class="qty"> — {{ l.note }}</span>
+    </div>
+    <div class="sale-item-right">
+      <span class="sale-profit">{{ l.amount }} د.ل</span>
+      <span class="sale-seller">👤 {{ l.user_name }}</span>
+      <span class="sale-seller">🕒 {{ l.created_at[:16] if l.created_at else '' }}</span>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="alert alert-info">لا توجد عمليات بعد</div>
+  {% endif %}
+</div>
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends "base_admin.html" %}
+{% set active = "sales" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">📑</div>
+  <div>
+    <div class="page-header-title">سجل المبيعات</div>
+    <div class="page-header-sub">تسجيل عملية بيع جديدة ومتابعة السجل</div>
+  </div>
+</div>
+
+<!-- تسجيل بيع -->
+<div class="card" id="add" style="margin-bottom:24px">
+  <div style="font-weight:700;color:#2d1f2a;margin-bottom:18px;font-size:1.05rem">💵 تسجيل عملية بيع</div>
+  {% set avail = products|selectattr('quantity','gt',0)|list %}
+  {% if avail %}
+  <form method="POST" action="/admin/sales/add">
+    <div class="grid-3">
+      <div class="form-group">
+        <label class="form-label">المنتج</label>
+        <select name="product" class="form-control" required>
+          {% for p in avail %}
+          <option value="{{ p.name }}">{{ p.name }} — متوفر: {{ p.quantity }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">الكمية</label>
+        <input type="number" name="qty" class="form-control" value="1" min="1" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">طريقة الدفع</label>
+        <select name="payment" class="form-control">
+          <option value="cash">نقدي (Cash)</option>
+          <option value="bank">بنكي (Bank)</option>
+        </select>
+      </div>
+    </div>
+    <button type="submit" class="btn btn-primary btn-full">✅ إتمام البيع</button>
+  </form>
+  {% else %}
+  <div class="alert alert-warning">لا توجد منتجات متاحة للبيع حالياً</div>
+  {% endif %}
+</div>
+
+<!-- ملخص -->
+{% if transactions %}
+{% set total_profit = transactions|sum(attribute='profit') %}
+{% set total_revenue = transactions|sum(attribute='total') %}
+<div class="grid-2">
+  <div class="stat-card accent">
+    <div class="stat-icon">📈</div>
+    <div class="stat-value">{{ total_profit|round(2) }}</div>
+    <div class="stat-label">إجمالي الأرباح (د.ل)</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon">💰</div>
+    <div class="stat-value">{{ total_revenue|round(2) }}</div>
+    <div class="stat-label">إجمالي الإيرادات (د.ل)</div>
+  </div>
+</div>
+
+<div style="font-weight:700;color:#2d1f2a;margin-bottom:14px;font-size:1.05rem">سجل العمليات ({{ transactions|length }})</div>
+{% for sale in transactions|reverse %}
+<div class="sale-item">
+  <div class="sale-item-left">
+    <span class="name">{{ sale.product_name }}</span>
+    <span class="qty"> × {{ sale.quantity }}</span>
+    <span class="qty"> — {{ sale.total }} د.ل</span>
+  </div>
+  <div class="sale-item-right">
+    <span class="sale-profit">ربح: {{ sale.profit }} د.ل</span>
+    <span class="sale-seller">👤 {{ sale.seller }}</span>
+    <span class="sale-seller">🕒 {{ sale.created_at[:16] if sale.created_at else '' }}</span>
+  </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="alert alert-info">لا توجد مبيعات بعد</div>
+{% endif %}
+
+{% endblock %}

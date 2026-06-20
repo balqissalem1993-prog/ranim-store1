@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ s.store_name }} — الإدارة</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:#f7f3f0;direction:rtl;display:flex;min-height:100vh}
+
+/* ── SIDEBAR ── */
+.sidebar{width:240px;min-height:100vh;background:#1a1118;display:flex;flex-direction:column;flex-shrink:0;position:fixed;right:0;top:0;height:100vh;overflow-y:auto;z-index:100}
+.sidebar-header{padding:28px 20px 20px;border-bottom:1px solid rgba(201,132,138,0.2);text-align:center}
+.sidebar-logo{width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid #c9848a;margin-bottom:12px}
+.sidebar-logo-placeholder{font-size:2rem;margin-bottom:12px}
+.sidebar-store-name{color:#e8ddd6;font-weight:700;font-size:0.95rem;letter-spacing:2px}
+.sidebar-badge{display:inline-flex;align-items:center;gap:7px;background:rgba(201,132,138,0.12);border:1px solid rgba(201,132,138,0.25);border-radius:20px;padding:4px 14px;margin-top:10px}
+.sidebar-badge-dot{width:7px;height:7px;border-radius:50%;background:#c9848a}
+.sidebar-badge-text{color:#c9848a;font-size:0.8rem;font-weight:600}
+
+.sidebar-section{padding:8px 0}
+.sidebar-section-title{color:#6b5560;font-size:0.68rem;letter-spacing:3px;text-transform:uppercase;padding:10px 20px 4px;font-weight:700}
+.sidebar-link{display:flex;align-items:center;gap:10px;padding:10px 20px;color:#c8b5a8;font-size:0.88rem;text-decoration:none;border-right:3px solid transparent;transition:all 0.2s}
+.sidebar-link:hover,.sidebar-link.active{background:rgba(201,148,138,0.12);color:#e8b4a8;border-right-color:#c9848a}
+.sidebar-link .icon{font-size:1rem;width:18px;text-align:center}
+.sidebar-divider{height:1px;background:rgba(201,132,138,0.15);margin:8px 20px}
+.sidebar-logout{display:flex;align-items:center;gap:10px;padding:12px 20px;color:#9e7a80;font-size:0.88rem;text-decoration:none;cursor:pointer;border:none;background:none;width:100%;font-family:'Tajawal',sans-serif;transition:all 0.2s}
+.sidebar-logout:hover{color:#e8b4a8;background:rgba(201,148,138,0.08)}
+
+/* ── MAIN ── */
+.main-content{margin-right:240px;flex:1;padding:32px;min-height:100vh}
+.page-header{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid #ede8e3}
+.page-header-icon{width:44px;height:44px;background:linear-gradient(135deg,#c9848a,#b5697a);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;box-shadow:0 4px 14px rgba(201,132,138,0.35);flex-shrink:0}
+.page-header-title{font-size:1.4rem;font-weight:700;color:#2d1f2a}
+.page-header-sub{font-size:0.82rem;color:#9e8880;margin-top:2px}
+
+/* ── CARDS ── */
+.card{background:white;border-radius:16px;border:1px solid #ede8e3;box-shadow:0 2px 12px rgba(26,17,24,0.05);padding:24px}
+.card-sm{background:white;border-radius:16px;border:1px solid #ede8e3;box-shadow:0 2px 12px rgba(26,17,24,0.05);padding:20px}
+
+.stat-card{background:white;border-radius:16px;padding:20px;border:1px solid #ede8e3;box-shadow:0 2px 12px rgba(26,17,24,0.05)}
+.stat-card.accent{background:linear-gradient(135deg,#c9848a,#b5697a);border:none;box-shadow:0 4px 20px rgba(201,132,138,0.35)}
+.stat-icon{font-size:1.6rem;margin-bottom:8px}
+.stat-value{font-size:1.8rem;font-weight:800;color:#2d1f2a}
+.stat-card.accent .stat-value{color:white}
+.stat-label{font-size:0.82rem;color:#9e8880;margin-top:2px}
+.stat-card.accent .stat-label{color:rgba(255,255,255,0.8)}
+
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:24px}
+
+/* ── FORM ── */
+.form-group{margin-bottom:16px}
+.form-label{display:block;color:#6b5560;font-size:0.85rem;font-weight:600;margin-bottom:6px}
+.form-control{width:100%;border:1.5px solid #e8ddd6;border-radius:12px;padding:10px 14px;font-family:'Tajawal',sans-serif;color:#2d1f2a;font-size:0.92rem;background:white;transition:border-color 0.2s;outline:none}
+.form-control:focus{border-color:#c9848a;box-shadow:0 0 0 3px rgba(201,132,138,0.12)}
+select.form-control{cursor:pointer}
+textarea.form-control{resize:vertical;min-height:80px}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:12px;font-family:'Tajawal',sans-serif;font-weight:700;font-size:0.9rem;cursor:pointer;border:none;text-decoration:none;transition:all 0.2s}
+.btn-primary{background:linear-gradient(135deg,#c9848a,#b5697a);color:white;box-shadow:0 4px 14px rgba(201,132,138,0.35)}
+.btn-primary:hover{opacity:0.9;transform:translateY(-1px)}
+.btn-sm{padding:7px 14px;font-size:0.82rem;border-radius:9px}
+.btn-danger{background:#fee2e2;color:#dc2626}
+.btn-danger:hover{background:#dc2626;color:white}
+.btn-success{background:#d1fae5;color:#059669}
+.btn-success:hover{background:#059669;color:white}
+.btn-ghost{background:rgba(201,132,138,0.08);color:#c9848a}
+.btn-ghost:hover{background:rgba(201,132,138,0.18)}
+.btn-wa{background:#25D366;color:white}
+.btn-wa:hover{background:#128C7E}
+.btn-full{width:100%;justify-content:center}
+
+/* ── TABLE ── */
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #ede8e3}
+table{width:100%;border-collapse:collapse;background:white}
+th{background:#f7f3f0;color:#6b5560;font-size:0.82rem;font-weight:700;padding:12px 16px;text-align:right;letter-spacing:0.5px}
+td{padding:12px 16px;border-top:1px solid #ede8e3;color:#2d1f2a;font-size:0.9rem;vertical-align:middle}
+tr:hover td{background:#fdf9f8}
+
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:0.78rem;font-weight:600}
+.badge-new{background:#e0e7ff;color:#4338ca}
+.badge-processing{background:#fef3c7;color:#d97706}
+.badge-shipped{background:#fed7aa;color:#c2410c}
+.badge-done{background:#d1fae5;color:#059669}
+.badge-cancelled{background:#fee2e2;color:#dc2626}
+
+/* ── ALERTS ── */
+.alert{padding:12px 16px;border-radius:12px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:0.9rem}
+.alert-warning{background:#fef3c7;border-right:4px solid #d97706;color:#92400e}
+.alert-success{background:#d1fae5;border-right:4px solid #059669;color:#065f46}
+.alert-info{background:#e0f2fe;border-right:4px solid #0284c7;color:#0c4a6e}
+.alert-danger{background:#fee2e2;border-right:4px solid #dc2626;color:#991b1b}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:4px;background:#ede8e3;border-radius:12px;padding:4px;margin-bottom:20px}
+.tab-btn{padding:8px 16px;border-radius:9px;border:none;background:none;color:#9e8880;font-family:'Tajawal',sans-serif;font-weight:600;font-size:0.88rem;cursor:pointer;transition:all 0.2s}
+.tab-btn.active{background:white;color:#c9848a;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* ── EXPANDER / ACCORDION ── */
+.accordion-item{border:1px solid #ede8e3;border-radius:14px;margin-bottom:10px;overflow:hidden;background:white}
+.accordion-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;cursor:pointer;font-weight:600;color:#2d1f2a}
+.accordion-header:hover{background:#fdf9f8}
+.accordion-body{padding:0 20px 16px;border-top:1px solid #ede8e3}
+
+/* ── SALE ITEM ── */
+.sale-item{background:white;border-radius:12px;padding:14px 18px;margin-bottom:8px;border:1px solid #ede8e3;display:flex;justify-content:space-between;align-items:center}
+.sale-item-left .name{font-weight:600;color:#2d1f2a}
+.sale-item-left .qty{color:#9e8880;font-size:0.85rem}
+.sale-item-right{display:flex;gap:16px;align-items:center}
+.sale-profit{color:#c9848a;font-weight:700}
+.sale-seller{color:#b0a0a8;font-size:0.82rem}
+
+/* ── PROGRESS BAR ── */
+.progress-wrap{background:#ede8e3;border-radius:20px;height:28px;overflow:hidden;margin:16px 0}
+.progress-bar{height:100%;border-radius:20px;display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:0.85rem;transition:width 0.5s}
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+.sidebar{width:100%;position:static;min-height:auto;flex-direction:row;flex-wrap:wrap}
+.main-content{margin-right:0;padding:16px}
+.grid-4,.grid-3{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-header">
+    {% if s.logo_url %}
+    <img src="{{ s.logo_url }}" class="sidebar-logo" alt="logo">
+    {% else %}
+    <div class="sidebar-logo-placeholder">🌸</div>
+    {% endif %}
+    <div class="sidebar-store-name">{{ s.store_name|upper }}</div>
+    <div class="sidebar-badge">
+      <div class="sidebar-badge-dot"></div>
+      <span class="sidebar-badge-text">{{ user }} — {{ 'مدير' if role=='admin' else 'موظف' }}</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">الرئيسية</div>
+    <a href="/admin/dashboard" class="sidebar-link {% if active=='dashboard' %}active{% endif %}"><span class="icon">🏠</span> لوحة التحكم</a>
+    <a href="/admin/reports#notifications" class="sidebar-link {% if active=='notifications' %}active{% endif %}"><span class="icon">🔔</span> الإشعارات</a>
+    <a href="/admin/reports#goals" class="sidebar-link"><span class="icon">🎯</span> أهداف المبيعات</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">المتجر</div>
+    <a href="/admin/products#add" class="sidebar-link"><span class="icon">➕</span> إضافة منتج</a>
+    <a href="/admin/products" class="sidebar-link {% if active=='products' %}active{% endif %}"><span class="icon">📦</span> المنتجات</a>
+    <a href="/admin/sales#add" class="sidebar-link"><span class="icon">💵</span> تسجيل بيع</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">الطلبات والمالية</div>
+    <a href="/admin/orders" class="sidebar-link {% if active=='orders' %}active{% endif %}"><span class="icon">📋</span> الطلبات</a>
+    <a href="/admin/finance" class="sidebar-link {% if active=='finance' %}active{% endif %}"><span class="icon">💰</span> المحافظ والخزائن</a>
+    <a href="/admin/sales" class="sidebar-link {% if active=='sales' %}active{% endif %}"><span class="icon">📑</span> سجل المبيعات</a>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">التقارير</div>
+    <a href="/admin/reports" class="sidebar-link {% if active=='reports' %}active{% endif %}"><span class="icon">📈</span> الإحصائيات</a>
+    <a href="/admin/reports#reviews" class="sidebar-link"><span class="icon">⭐</span> تقييمات الزبائن</a>
+  </div>
+
+  {% if role=='admin' %}
+  <div class="sidebar-section">
+    <div class="sidebar-section-title">الإعدادات</div>
+    <a href="/admin/settings" class="sidebar-link {% if active=='settings' %}active{% endif %}"><span class="icon">⚙️</span> إعدادات المتجر</a>
+    <a href="/admin/settings#users" class="sidebar-link"><span class="icon">👥</span> المستخدمون</a>
+    <a href="/admin/settings#coupons" class="sidebar-link"><span class="icon">🎁</span> الكوبونات</a>
+  </div>
+  {% endif %}
+
+  <div style="margin-top:auto;padding:12px 0">
+    <div class="sidebar-divider"></div>
+    <a href="/admin/logout" class="sidebar-logout">
+      <span>🚪</span> تسجيل الخروج
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main class="main-content">
+  {% block content %}{% endblock %}
+</main>
+
+<script>
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const group=btn.closest('.tabs-group')||btn.closest('.card');
+    group.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    group.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+// Hash-based tabs
+if(location.hash){
+  const target=document.querySelector(`[data-tab="${location.hash.slice(1)}"]`);
+  if(target) target.click();
+}
+// Accordion
+document.querySelectorAll('.accordion-header').forEach(h=>{
+  h.addEventListener('click',()=>{
+    const body=h.nextElementSibling;
+    const isOpen=body.style.display==='block';
+    h.closest('.accordion-item').parentNode.querySelectorAll('.accordion-body').forEach(b=>b.style.display='none');
+    body.style.display=isOpen?'none':'block';
+  });
+});
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

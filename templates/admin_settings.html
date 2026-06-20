@@ -1,0 +1,193 @@
+{% extends "base_admin.html" %}
+{% set active = "settings" %}
+{% block content %}
+<div class="page-header">
+  <div class="page-header-icon">⚙️</div>
+  <div>
+    <div class="page-header-title">إعدادات المتجر</div>
+    <div class="page-header-sub">المعلومات، الألوان، المنتجات، المستخدمون، الكوبونات</div>
+  </div>
+</div>
+
+<div class="tabs tabs-group">
+  <button class="tab-btn active" data-tab="tab-info">🏪 المعلومات</button>
+  <button class="tab-btn" data-tab="tab-colors">🎨 الألوان</button>
+  <button class="tab-btn" data-tab="tab-products">📦 المنتجات</button>
+  <button class="tab-btn" data-tab="tab-advanced">🔧 متقدمة</button>
+  <button class="tab-btn" data-tab="users">👥 المستخدمون</button>
+  <button class="tab-btn" data-tab="coupons">🎁 الكوبونات</button>
+</div>
+
+<!-- المعلومات -->
+<div id="tab-info" class="tab-content active">
+  <div class="card">
+    <form method="POST" action="/admin/settings" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="save_info">
+      <div class="form-group"><label class="form-label">اسم المتجر</label><input type="text" name="store_name" class="form-control" value="{{ s.store_name }}"></div>
+      <div class="form-group"><label class="form-label">الجملة الترحيبية</label><input type="text" name="welcome_message" class="form-control" value="{{ s.welcome_message }}"></div>
+      <div class="form-group"><label class="form-label">رقم واتساب (بدون +)</label><input type="text" name="whatsapp_number" class="form-control" value="{{ s.whatsapp_number }}"></div>
+      <div class="form-group"><label class="form-label">نص زر السلة</label><input type="text" name="btn_text" class="form-control" value="{{ s.btn_text }}"></div>
+      <div class="form-group"><label class="form-label">رابط متجر الزبائن (للـ QR)</label><input type="text" name="customer_url" class="form-control" value="{{ s.customer_url }}" placeholder="https://your-app.onrender.com"></div>
+      {% if s.logo_url %}<img src="{{ s.logo_url }}" style="width:100px;border-radius:12px;margin-bottom:10px"><br>{% endif %}
+      <div class="form-group"><label class="form-label">رفع شعار جديد</label><input type="file" name="logo" accept="image/*" class="form-control"></div>
+      <button type="submit" class="btn btn-primary">💾 حفظ المعلومات</button>
+    </form>
+  </div>
+</div>
+
+<!-- الألوان -->
+<div id="tab-colors" class="tab-content">
+  <div class="card">
+    <form method="POST" action="/admin/settings">
+      <input type="hidden" name="action" value="save_colors">
+      <div class="grid-2">
+        <div class="form-group"><label class="form-label">اللون الرئيسي</label><input type="color" name="color_primary" class="form-control" value="{{ s.color_primary }}" style="height:46px"></div>
+        <div class="form-group"><label class="form-label">لون التمييز</label><input type="color" name="color_accent" class="form-control" value="{{ s.color_accent }}" style="height:46px"></div>
+        <div class="form-group"><label class="form-label">لون الخلفية</label><input type="color" name="color_bg" class="form-control" value="{{ s.color_bg }}" style="height:46px"></div>
+        <div class="form-group"><label class="form-label">لون النصوص</label><input type="color" name="color_text" class="form-control" value="{{ s.color_text }}" style="height:46px"></div>
+      </div>
+      <button type="submit" class="btn btn-primary">💾 حفظ الألوان</button>
+    </form>
+  </div>
+</div>
+
+<!-- المنتجات (إظهار/إخفاء) -->
+<div id="tab-products" class="tab-content">
+  <div class="card">
+    {% if products %}
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>المنتج</th><th>الكمية</th><th>السعر</th><th>الحالة</th><th></th></tr></thead>
+        <tbody>
+        {% for p in products %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.quantity }}</td>
+          <td>{{ p.selling_price }} د.ل</td>
+          <td>{% if p.visible != False %}<span class="badge badge-done">🟢 ظاهر</span>{% else %}<span class="badge badge-cancelled">🔴 مخفي</span>{% endif %}</td>
+          <td>
+            <form method="POST" action="/admin/settings" style="display:inline">
+              <input type="hidden" name="action" value="toggle_product_visibility">
+              <input type="hidden" name="product_id" value="{{ p.id }}">
+              <button type="submit" class="btn btn-ghost btn-sm">{{ 'إخفاء' if p.visible != False else 'إظهار' }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">لا توجد منتجات بعد</div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- متقدمة -->
+<div id="tab-advanced" class="tab-content">
+  <div class="card">
+    <form method="POST" action="/admin/settings">
+      <input type="hidden" name="action" value="save_advanced">
+      <div class="form-group">
+        <label class="form-label" style="display:flex;align-items:center;gap:8px">
+          <input type="checkbox" name="maintenance_mode" {% if s.maintenance_mode %}checked{% endif %} style="width:18px;height:18px">
+          🚧 تفعيل وضع الصيانة
+        </label>
+      </div>
+      <div class="form-group"><label class="form-label">رسالة الصيانة</label><input type="text" name="maintenance_msg" class="form-control" value="{{ s.maintenance_msg }}"></div>
+      <div class="form-group"><label class="form-label">نص البانر العلوي</label><textarea name="custom_banner" class="form-control">{{ s.custom_banner }}</textarea></div>
+      <button type="submit" class="btn btn-primary">💾 حفظ الإعدادات المتقدمة</button>
+    </form>
+  </div>
+</div>
+
+<!-- المستخدمون -->
+<div id="users" class="tab-content">
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-weight:700;margin-bottom:14px">👥 المستخدمون الحاليون</div>
+    {% for uname, udata in users.items() %}
+    <div class="alert alert-info">👤 {{ uname }} | الدور: {{ udata.role if udata is mapping else 'admin' }}</div>
+    {% endfor %}
+  </div>
+
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-weight:700;margin-bottom:14px">➕ إضافة مستخدم</div>
+    <form method="POST" action="/admin/settings">
+      <input type="hidden" name="action" value="add_user">
+      <div class="grid-3">
+        <div class="form-group"><label class="form-label">اسم المستخدم</label><input type="text" name="username" class="form-control" required></div>
+        <div class="form-group"><label class="form-label">الرمز السري</label><input type="text" name="password" class="form-control" required></div>
+        <div class="form-group">
+          <label class="form-label">الصلاحية</label>
+          <select name="role" class="form-control">
+            <option value="staff">موظف</option>
+            <option value="admin">مدير</option>
+          </select>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-primary">إضافة</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:700;margin-bottom:14px">🔑 تغيير كلمة المرور</div>
+    <form method="POST" action="/admin/settings">
+      <input type="hidden" name="action" value="change_password">
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">المستخدم</label>
+          <select name="change_user" class="form-control">
+            {% for uname in users.keys() %}<option value="{{ uname }}">{{ uname }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">كلمة المرور الجديدة</label><input type="password" name="new_password" class="form-control" required></div>
+      </div>
+      <button type="submit" class="btn btn-primary">تحديث كلمة المرور</button>
+    </form>
+  </div>
+</div>
+
+<!-- الكوبونات -->
+<div id="coupons" class="tab-content">
+  <div class="card" style="margin-bottom:20px">
+    <div style="font-weight:700;margin-bottom:14px">➕ إنشاء كوبون</div>
+    <form method="POST" action="/admin/settings">
+      <input type="hidden" name="action" value="add_coupon">
+      <div class="form-group"><label class="form-label">كود الكوبون (مثال: RANIM10)</label><input type="text" name="coupon_code" class="form-control" required></div>
+      <div class="grid-2">
+        <div class="form-group">
+          <label class="form-label">نوع الخصم</label>
+          <select name="coupon_type" class="form-control">
+            <option value="نسبة مئوية %">نسبة مئوية %</option>
+            <option value="مبلغ ثابت د.ل">مبلغ ثابت د.ل</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">قيمة الخصم</label><input type="number" step="0.01" name="coupon_value" class="form-control" required></div>
+      </div>
+      <div class="form-group"><label class="form-label">الحد الأدنى للطلب (0 = بدون حد)</label><input type="number" step="0.01" name="coupon_min" class="form-control" value="0"></div>
+      <div class="form-group"><label class="form-label">رقم هاتف زبون محدد (اتركه فارغاً للجميع)</label><input type="text" name="phone_target" class="form-control" placeholder="اختياري"></div>
+      <button type="submit" class="btn btn-primary">💾 حفظ الكوبون</button>
+    </form>
+  </div>
+
+  <div style="font-weight:700;margin-bottom:14px">📋 الكوبونات الحالية</div>
+  {% if coupons %}
+  {% for cp in coupons %}
+  <div class="sale-item">
+    <div class="sale-item-left">
+      <span class="name">🎁 {{ cp.code }}</span>
+      <span class="qty"> | خصم {{ cp.value }}{{ '%' if cp.type=='percent' else ' د.ل' }} | حد أدنى: {{ cp.min_order or 0 }} د.ل | 👤 {{ cp.phone_target or 'الجميع' }}</span>
+    </div>
+    <div class="sale-item-right">
+      <span class="badge {{ 'badge-done' if cp.active else 'badge-cancelled' }}">{{ '🟢 فعّال' if cp.active else '🔴 معطّل' }}</span>
+      <form method="POST" action="/admin/settings/coupon_toggle/{{ cp.id }}" style="display:inline"><button type="submit" class="btn btn-ghost btn-sm">تبديل</button></form>
+      <form method="POST" action="/admin/settings/coupon_delete/{{ cp.id }}" style="display:inline" onsubmit="return confirm('حذف الكوبون؟')"><button type="submit" class="btn btn-danger btn-sm">🗑️</button></form>
+    </div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="alert alert-info">لا توجد كوبونات بعد</div>
+  {% endif %}
+</div>
+
+{% endblock %}
